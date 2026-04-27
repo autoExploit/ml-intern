@@ -1,0 +1,157 @@
+{
+  "sweep_name": "cpu_gateinit_v1",
+  "design_mode": "iso_active",
+  "wallclock_s": 1799.995480298996,
+  "runs": [
+    {
+      "rho": 1.0,
+      "design_mode": "iso_active",
+      "run_name": "cpu_gateinit_v1__rho1.00",
+      "ckpt": "out/sweeps/iso_active/cpu_gateinit_v1__rho1.00/last.pt",
+      "wallclock_s": 587.3215005397797,
+      "param_counts": {
+        "embed": 6432896,
+        "lm_head": 0,
+        "backbone_attn": 262144,
+        "backbone_ffn": 528384,
+        "backbone_norms": 1152,
+        "engram_table": 0,
+        "engram_compute": 0,
+        "P_active": 791680,
+        "P_total": 791680,
+        "P_total_with_embed": 7224576
+      },
+      "final_val_loss": 6.193540716171265,
+      "eval": {
+        "ckpt": "out/sweeps/iso_active/cpu_gateinit_v1__rho1.00/last.pt",
+        "ppl": {
+          "nll": 6.124502468109131,
+          "ppl": 456.917325766273,
+          "n_tokens": 10240
+        },
+        "name_recall": {
+          "name": "NameRecall",
+          "n": 80,
+          "top1_acc": 0.0,
+          "mean_rank": 10729.9125,
+          "mean_logprob_gold": -10.124163329601288,
+          "ci95": [
+            0.0,
+            0.0
+          ]
+        },
+        "induction_copy": {
+          "name": "InductionCopy",
+          "n": 80,
+          "top1_acc": 0.0,
+          "mean_rank": 24079.8,
+          "mean_logprob_gold": -12.17214239835739,
+          "ci95": [
+            0.0,
+            0.0
+          ]
+        }
+      }
+    },
+    {
+      "rho": 0.5,
+      "design_mode": "iso_active",
+      "run_name": "cpu_gateinit_v1__rho0.50",
+      "ckpt": "out/sweeps/iso_active/cpu_gateinit_v1__rho0.50/last.pt",
+      "wallclock_s": 609.3376684188843,
+      "param_counts": {
+        "embed": 6432896,
+        "lm_head": 0,
+        "backbone_attn": 262144,
+        "backbone_ffn": 528384,
+        "backbone_norms": 1408,
+        "engram_table": 1025280,
+        "engram_compute": 263936,
+        "P_active": 1055872,
+        "P_total": 2081152,
+        "P_total_with_embed": 8514048
+      },
+      "final_val_loss": 6.066313648223877,
+      "eval": {
+        "ckpt": "out/sweeps/iso_active/cpu_gateinit_v1__rho0.50/last.pt",
+        "ppl": {
+          "nll": 6.004083776473999,
+          "ppl": 405.0796751299867,
+          "n_tokens": 10240
+        },
+        "name_recall": {
+          "name": "NameRecall",
+          "n": 80,
+          "top1_acc": 0.0,
+          "mean_rank": 12742.9875,
+          "mean_logprob_gold": -10.323824733495712,
+          "ci95": [
+            0.0,
+            0.0
+          ]
+        },
+        "induction_copy": {
+          "name": "InductionCopy",
+          "n": 80,
+          "top1_acc": 0.0,
+          "mean_rank": 22653.6375,
+          "mean_logprob_gold": -12.22475370168686,
+          "ci95": [
+            0.0,
+            0.0
+          ]
+        }
+      }
+    },
+    {
+      "rho": 0.0,
+      "design_mode": "iso_active",
+      "run_name": "cpu_gateinit_v1__rho0.00",
+      "ckpt": "out/sweeps/iso_active/cpu_gateinit_v1__rho0.00/last.pt",
+      "wallclock_s": 603.3344688415527,
+      "param_counts": {
+        "embed": 6432896,
+        "lm_head": 0,
+        "backbone_attn": 262144,
+        "backbone_ffn": 528384,
+        "backbone_norms": 1408,
+        "engram_table": 2040576,
+        "engram_compute": 263936,
+        "P_active": 1055872,
+        "P_total": 3096448,
+        "P_total_with_embed": 9529344
+      },
+      "final_val_loss": 6.057759094238281,
+      "eval": {
+        "ckpt": "out/sweeps/iso_active/cpu_gateinit_v1__rho0.00/last.pt",
+        "ppl": {
+          "nll": 5.992528772354126,
+          "ppl": 400.4259166939081,
+          "n_tokens": 10240
+        },
+        "name_recall": {
+          "name": "NameRecall",
+          "n": 80,
+          "top1_acc": 0.0,
+          "mean_rank": 12638.2375,
+          "mean_logprob_gold": -10.408057618141175,
+          "ci95": [
+            0.0,
+            0.0
+          ]
+        },
+        "induction_copy": {
+          "name": "InductionCopy",
+          "n": 80,
+          "top1_acc": 0.0,
+          "mean_rank": 23470.25,
+          "mean_logprob_gold": -12.274378699064254,
+          "ci95": [
+            0.0,
+            0.0
+          ]
+        }
+      }
+    }
+  ]
+}

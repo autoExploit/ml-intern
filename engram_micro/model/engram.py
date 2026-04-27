@@ -95,10 +95,19 @@ class EngramConfig:
     kernel_size: int = 4
     use_conv: bool = True
     use_signed_sqrt_gate: bool = True   # demo's stabilizer; ablation flag
+    # gate pre-sigmoid bias: at init, sigmoid(gate_bias) is the average gate
+    # value. Setting it strongly negative (e.g. -3 → 0.047) makes Engram
+    # *near-no-op at init*, so the optimiser only "opens" the gate as the
+    # memory table starts to learn useful retrievals. Without this, ~50%
+    # of random retrieved noise leaks into the residual stream from step 0
+    # — empirically harmful at small compute (Loop 5 result).
+    gate_bias_init: float = -3.0
     # tokenizer compression
     pad_id: int = 0
-    # init scale for embedding table
-    table_init_std: float = 0.02
+    # init scale for embedding table; setting to 0 starts the table at
+    # zero so v=0 regardless of gate (strictly safer at small compute,
+    # gradient still flows once W_V, W_K learn).
+    table_init_std: float = 0.0
     # placement (used by surrounding model, not by this module)
     layer_ids: List[int] = field(default_factory=lambda: [1, 8])
     # rng for hash multipliers
@@ -225,7 +234,13 @@ class EngramMemory(nn.Module):
 
         # ---- Memory table ----
         self.embedding = nn.Embedding(total_slots, cfg.d_per_head)
-        nn.init.normal_(self.embedding.weight, mean=0.0, std=cfg.table_init_std)
+        if cfg.table_init_std > 0:
+            nn.init.normal_(self.embedding.weight, mean=0.0, std=cfg.table_init_std)
+        else:
+            nn.init.zeros_(self.embedding.weight)
+
+        # ---- Gate bias (Loop 6 deviation: see config docstring). ----
+        self.gate_bias = nn.Parameter(torch.full((1,), float(cfg.gate_bias_init)))
 
         # d_mem dimension after concat of all heads
         d_mem = self.num_heads_total * cfg.d_per_head
@@ -326,6 +341,7 @@ class EngramMemory(nn.Module):
         dot = (q_n * k_n).sum(dim=-1) / math.sqrt(D)      # [B, L]
         if self.cfg.use_signed_sqrt_gate:
             dot = dot.sign() * dot.abs().clamp_min(1e-6).sqrt()
+        dot = dot + self.gate_bias                        # [B, L]
         alpha = torch.sigmoid(dot).unsqueeze(-1)          # [B, L, 1]
         v_tilde = alpha * v                               # [B, L, D]
 

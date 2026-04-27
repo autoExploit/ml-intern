@@ -57,7 +57,10 @@ def test_forward_determinism():
 
 
 def test_grad_flows_into_table_and_projs():
-    m = _make()
+    # Use nonzero table init so W_V/W_K receive nonzero input at step 0;
+    # under the (new) default zero-init, grads to W_V/W_K are 0 at step 0
+    # by construction (input is identically zero) — see Loop 6 init change.
+    m = _make(table_init_std=0.02)
     h = torch.randn(2, 5, 64, requires_grad=True)
     ids = torch.randint(1, 256, (2, 5))
     out = m(h, ids).sum()
@@ -165,3 +168,41 @@ def test_hash_distribution_coverage():
     prime0 = int(m.head_primes[0].item())
     # with 16*256=4096 trials and prime ~257, expect near-saturation
     assert unique > 0.5 * min(4096, prime0)
+
+
+def test_gate_bias_makes_initial_output_small():
+    """With default gate_bias_init=-3.0 and table zero-init, the Engram
+    contribution at step 0 must be tiny — well below what would
+    significantly perturb a residual stream."""
+    import torch
+    from engram_micro.model.engram import EngramConfig, EngramMemory
+
+    cfg = EngramConfig(hidden_size=64, max_ngram_size=3, n_head_per_ngram=2,
+                       base_table_size=257, d_per_head=16, kernel_size=3,
+                       pad_id=0, seed=0)
+    ctab = torch.arange(257, dtype=torch.long)
+    mem = EngramMemory(cfg, ctab, layer_id=0)
+    h = torch.randn(2, 16, 64)
+    ids = torch.randint(1, 256, (2, 16))
+    out = mem(h, ids)
+    assert out.shape == h.shape
+    # contribution must be small (table is zero-init; gate ≈ sigmoid(-3))
+    assert out.abs().max().item() < 0.1, f"engram init out too large: {out.abs().max()}"
+
+
+def test_gate_bias_is_trainable():
+    """gate_bias must accumulate gradient (i.e. be reachable by autograd)."""
+    import torch
+    from engram_micro.model.engram import EngramConfig, EngramMemory
+
+    cfg = EngramConfig(hidden_size=64, max_ngram_size=3, n_head_per_ngram=2,
+                       base_table_size=257, d_per_head=16, kernel_size=3,
+                       pad_id=0, seed=0, table_init_std=0.02)  # nonzero so dot != 0
+    ctab = torch.arange(257, dtype=torch.long)
+    mem = EngramMemory(cfg, ctab, layer_id=0)
+    h = torch.randn(1, 8, 64, requires_grad=True)
+    ids = torch.randint(1, 256, (1, 8))
+    out = mem(h, ids)
+    out.sum().backward()
+    assert mem.gate_bias.grad is not None
+    assert mem.gate_bias.grad.abs().sum().item() > 0
