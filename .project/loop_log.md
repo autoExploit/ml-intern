@@ -27,3 +27,33 @@ Rebuttals stand. Proceeding.
 ### DO
 (spawn research sub-agent — large, parallel-ish, benefits from isolated context: reading paper + repo end-to-end is exactly the use case)
 
+
+---
+
+## Loop 1 — Engram module
+
+### OBSERVE
+Loop 0 produced spec + small-scale questions. No code yet. Demo at `/tmp/Engram` reviewed.
+
+### ORIENT / DECIDE
+Highest leverage: implement the Engram module faithfully + unit-test, before backbone or training. Engram is the load-bearing novel piece.
+
+### DEVIL'S ADVOCATE
+- Tech: hash formula must match demo exactly. Used same `mix * mults[0] XOR mix * mults[k]` per-layer multipliers. Per-head primes unique globally for the layer.
+- Tech: signed-sqrt gate squashing was not in paper, only in demo code. Reproduced under flag.
+- Tech: conv dilation must = max_ngram_size (not 1).
+- Exp: unit tests don't prove the module helps — only that it runs correctly. That's the right scope here.
+- Priority: tokenizer choice deferred (module is tokenizer-agnostic; takes id arrays).
+
+### DO
+- Created package `engram_micro/{model,data,train,eval,tests}`.
+- `model/engram.py`: 280-line implementation with EngramConfig, EngramMemory, build_compression_table.
+- 12 unit tests covering: shape, determinism, gradient flow, pad handling, hash range, hash multiplier per-layer uniqueness, ablation flags (signed-sqrt, no-conv), causality (changing token at t leaves outputs at <t intact), compression collapses 'A'/'a' on real GPT-2 tokenizer, hash coverage > 50%.
+
+### RESULT
+All 12 tests pass on CPU torch 2.10. Build green.
+
+### NEXT
+- Backbone GPT-style transformer scaffold.
+- Param-counting helper that lets us actually compute ρ for our redefined small-scale formulation.
+- Tokenizer commitment (start with GPT-2 BPE; trivial to swap).
