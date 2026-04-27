@@ -57,3 +57,39 @@ All 12 tests pass on CPU torch 2.10. Build green.
 - Backbone GPT-style transformer scaffold.
 - Param-counting helper that lets us actually compute ρ for our redefined small-scale formulation.
 - Tokenizer commitment (start with GPT-2 BPE; trivial to swap).
+
+---
+
+## Loop 2 — Backbone, integration, param accounting
+
+### OBSERVE / ORIENT
+Engram module green from Loop 1. Need backbone to host it + matched-config generator for the ρ sweep.
+
+### DECIDE
+Build (a) minimal GPT-style backbone (RMSNorm pre-norm, RoPE, SwiGLU FFN, SDPA causal attn, tied embed), (b) EngramLM that inserts EngramMemory at chosen layers, (c) param accounting + iso-param config designer.
+
+Falsifiable: end-to-end fwd/bwd works for both baseline + engram; iso-param sweep configs come within 5% of constant P_total across ρ∈[0,1].
+
+### DEVIL'S ADVOCATE
+- Tech: SDPA gives causal mask for free; safer than handrolled.
+- Tech: SwiGLU intermediate computed as `round(ffn_mult*d*2/3)` rounded to multiple of 8 (Llama convention).
+- Exp: this loop doesn't train anything, so doesn't validate Engram helps. Right scope.
+- Priority: param accounting was the real upstream — without it ρ-sweep is impossible.
+
+### DO
+- `model/lm.py`: BackboneConfig, RoPE helpers, CausalSelfAttention (SDPA, RoPE), SwiGLUFFN, TransformerBlock (with optional Engram), EngramLM (forward+loss).
+- `model/accounting.py`: count_params() bucketing all params; design_iso_param_configs(rho) that shrinks FFN intermediate to free space for the table.
+- 5 new tests (17 total). All green.
+
+### RESULT
+At ~60M P_total target with backbone d=640, L=12, H=10, max_table_params=36M, ρ-sweep configs hit P_total within 2.5% (60.43M ↔ 60.56M). With embeddings, ~92.6M total each. P_active varies 24.5M→59.1M as ρ goes 0→1 — this means *iso-FLOPs is NOT held*. Iso-param yes; iso-FLOPs no.
+
+This is a genuine scientific issue: at small scale, FFN params dominate compute, so different ρ → different training FLOPs. Two options:
+(a) Stick with iso-param only; add a *separate* iso-active sweep where we hold P_active constant by adding *depth* instead of width when ρ→0.
+(b) Match by training-token budget instead of FLOPs.
+TBD next loop.
+
+### NEXT
+- Pick option (a) or (b) for compute matching; document.
+- Tokenizer + data pipeline (TinyStories or fineweb-edu sample).
+- A first 1000-step training smoke test on baseline (ρ=1).
