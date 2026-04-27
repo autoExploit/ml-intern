@@ -4,7 +4,8 @@ import torch
 from engram_micro.model.engram import EngramConfig
 from engram_micro.model.lm import EngramLM, EngramLMConfig, BackboneConfig
 from engram_micro.model.accounting import (
-    count_params, design_iso_param_configs, SwiGLU_intermediate,
+    count_params, design_iso_param_configs, design_iso_active_configs,
+    SwiGLU_intermediate,
 )
 
 
@@ -110,3 +111,25 @@ def test_param_iso_constraint_within_tolerance():
     pt_lo = c_lo["P_total"]
     rel = abs(pt_hi - pt_lo) / max(pt_hi, pt_lo)
     assert rel < 0.10, f"P_total mismatch too large: {pt_hi} vs {pt_lo} ({rel:.3f})"
+
+
+def test_iso_active_holds_p_active_constant():
+    bb = BackboneConfig(vocab_size=257, hidden_size=128, num_layers=6,
+                        num_heads=4, ffn_mult=4.0, max_seq_len=64)
+    eng = _tiny_engram(d=128)
+    p_actives = []
+    p_totals = []
+    for rho in [1.0, 0.5, 0.0]:
+        cfg, _ = design_iso_active_configs(bb, eng, rho=rho,
+                                           max_engram_table_params=400_000,
+                                           engram_layer_ids=[1, 3])
+        m = EngramLM(cfg, compression_table=_ident(257) if cfg.engram else None)
+        c = count_params(m)
+        p_actives.append(c["P_active"])
+        p_totals.append(c["P_total"])
+    # P_active should be near-constant (within ~10% — Engram compute params
+    # are non-zero but small).
+    rel = (max(p_actives) - min(p_actives)) / max(p_actives)
+    assert rel < 0.10, f"iso-active P_active varied too much: {p_actives}"
+    # P_total should *increase* monotonically as rho decreases
+    assert p_totals[0] < p_totals[1] < p_totals[2]

@@ -79,7 +79,7 @@ def design_iso_param_configs(
     max_engram_table_params: int,
     engram_layer_ids,
 ) -> Tuple[EngramLMConfig, Dict[str, int]]:
-    """Build a config at ratio `rho` matched to a fixed total budget.
+    """ISO-PARAM sweep: hold P_total ~ constant; P_active varies.
 
     Strategy:
       - At rho=1: no Engram (or zero-sized table). Backbone uses its
@@ -139,3 +139,44 @@ def design_iso_param_configs(
 def SwiGLU_intermediate(d: int, ffn_mult: float) -> int:
     i = int(round(ffn_mult * d * 2 / 3))
     return max(8, (i + 7) // 8 * 8)
+
+
+def design_iso_active_configs(
+    base_backbone: BackboneConfig,
+    base_engram: EngramConfig,
+    rho: float,
+    max_engram_table_params: int,
+    engram_layer_ids,
+) -> Tuple[EngramLMConfig, Dict[str, int]]:
+    """ISO-ACTIVE (= iso-FLOPs) sweep: backbone is identical across all ρ;
+    only the Engram table SIZE varies as (1-ρ)*max_engram_table_params.
+
+    P_active changes only by a small constant due to Engram's W_K/W_V/conv
+    (Engram "compute" params). Per-token FLOPs are dominated by the
+    backbone, so this sweep is the cleanest test of "given the same
+    training compute, does adding more memory help?".
+
+    P_total varies linearly with (1-ρ): up to +max_engram_table_params at ρ=0.
+
+    Returns (config, info).
+    """
+    bb = BackboneConfig(**asdict(base_backbone))
+    if rho >= 0.999:
+        cfg = EngramLMConfig(backbone=bb, engram=None, engram_layer_ids=[])
+        return cfg, {"target_table_params": 0, "slots_per_head": 0}
+
+    target_table_params = int((1 - rho) * max_engram_table_params)
+    n_engram_layers = max(1, len(engram_layer_ids))
+    K = base_engram.n_head_per_ngram
+    Nm1 = base_engram.max_ngram_size - 1
+    d_ph = base_engram.d_per_head
+    total_slots_needed = target_table_params // d_ph
+    slots_per_head = max(8, total_slots_needed // (n_engram_layers * Nm1 * K))
+    eng = EngramConfig(**asdict(base_engram))
+    eng.base_table_size = int(slots_per_head)
+
+    cfg = EngramLMConfig(backbone=bb, engram=eng, engram_layer_ids=engram_layer_ids)
+    return cfg, {
+        "target_table_params": target_table_params,
+        "slots_per_head": slots_per_head,
+    }

@@ -20,7 +20,7 @@ import torch.nn as nn
 
 from engram_micro.model.lm import EngramLM, EngramLMConfig, BackboneConfig
 from engram_micro.model.engram import EngramConfig, build_compression_table
-from engram_micro.model.accounting import count_params, design_iso_param_configs
+from engram_micro.model.accounting import count_params, design_iso_param_configs, design_iso_active_configs
 from engram_micro.data.loader import make_loader
 
 
@@ -41,6 +41,7 @@ class TrainConfig:
     seq_len: int = 256
     engram_layer_ids: list = field(default_factory=lambda: [1, 4])
     max_engram_table_params: int = 8_000_000
+    design_mode: str = "iso_active"   # "iso_active" or "iso_param"
     engram_n_head_per_ngram: int = 4
     engram_d_per_head: int = 64
     engram_max_ngram: int = 3
@@ -108,7 +109,9 @@ def _build_model(cfg: TrainConfig, tokenizer):
         pad_id=tokenizer.eos_token_id or 0,
         seed=cfg.seed,
     )
-    lm_cfg, info = design_iso_param_configs(
+    designer = (design_iso_active_configs if cfg.design_mode == "iso_active"
+                else design_iso_param_configs)
+    lm_cfg, info = designer(
         bb, eng, rho=cfg.rho,
         max_engram_table_params=cfg.max_engram_table_params,
         engram_layer_ids=cfg.engram_layer_ids,
