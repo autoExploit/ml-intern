@@ -123,3 +123,80 @@ Trainer works end-to-end on CPU. Engram code-paths exercised. Saved artefacts: `
 - Decide compute-matching: option (a) iso-active by varying depth instead of just FFN width; option (b) match by training-token budget.
 - After deciding, plan a small GPU sweep on HF Jobs.
 - Eval harness: PPL + at least one knowledge probe.
+
+---
+
+## Loop 4 — Eval harness
+
+### OBSERVE
+Loops 0–3 left us with a working module + backbone + trainer; smoke runs
+green on CPU but undertrained. Compute-matching design (iso-active vs
+iso-param) coded but not documented. No held-out evaluator beyond raw loss.
+
+### ORIENT
+Highest-leverage gap: there is *no way to detect the knowledge-vs-reasoning
+split* that is Engram's central claim. A ρ-sweep without probes produces
+only PPL curves, which collapse the very signal we care about. Building
+the eval harness is upstream of every future experiment.
+
+### DECIDE
+Build (a) PPL evaluator over a held-out token stream, (b) two synthetic
+probes — NameRecall (knowledge / static-pattern memory proxy) and
+InductionCopy (reasoning-circuit / induction-head proxy), (c) an end-to-end
+runner that loads any checkpoint and writes `eval.json`. Document the
+two-sweep compute-matching decision in `.project/research/`.
+
+Falsifiable: (i) `pytest engram_micro/tests` stays green and gains ≥3 tests;
+(ii) `run_eval` produces a finite PPL and 0–1 accuracy on the existing
+smoke checkpoint; (iii) doc enumerates which scientific question each
+sweep answers.
+
+### DEVIL'S ADVOCATE
+- *Tech*: Probe tokenization is fragile — leading-space vs not, multi-BPE
+  names. Mitigation: probe takes the *first BPE id of the with-leading-space
+  form* when prefix doesn't end in space, and matches that single id. Names
+  in DEFAULT_NAMES were chosen to be common GPT-2 single-token surface forms.
+- *Tech*: InductionCopy uses random rare tokens. The model's argmax is
+  almost always a high-frequency token, so top-1 will be ≈0 for any small
+  model on this probe — making it look like a useless metric. Mitigation:
+  also report mean rank of gold and mean log-prob of gold; rank shifts long
+  before top-1 does. Reported in ProbeResult.
+- *Exp*: Smoke checkpoints are at chance — running the harness on them
+  doesn't validate that the harness can detect the Engram effect, only that
+  it runs. Accepted: this is an infrastructure loop, not a science loop.
+  Future loops will validate sensitivity on properly-trained models.
+- *Priority*: Should we instead build the sweep runner first? No — it would
+  produce only loss curves until the harness exists. Eval is upstream.
+
+Rebuttals stand. Proceeded.
+
+### DO
+- `engram_micro/eval/perplexity.py` — token-weighted PPL.
+- `engram_micro/eval/probes.py` — NameRecall, InductionCopy, ProbeResult,
+  bootstrap CI, careful BPE handling.
+- `engram_micro/eval/run_eval.py` — checkpoint loader + report writer.
+- `engram_micro/tests/test_eval.py` — 4 new tests (PPL runs, both probes
+  run, determinism).
+- `.project/research/compute_matching.md` — decision: run two sweeps
+  (iso-active and iso-param), report both, with explicit reasoning about
+  which scientific question each answers.
+
+### RESULT
+- 22/22 unit tests pass (was 18; +4 eval tests).
+- `run_eval` on `out/smoke_baseline/last.pt` produces:
+    PPL ≈ 8507 (60-step CPU smoke run, expected high)
+    NameRecall top-1 = 0.00, mean_rank ≈ 19500
+    InductionCopy top-1 = 0.00, mean_rank ≈ 30000
+  All numbers near chance for an undertrained tiny model — code path
+  validated, signal not yet present.
+- Compute-matching strategy now formal: Sweep A iso-active + Sweep B iso-param,
+  with rationale for what each isolates.
+
+### NEXT
+- Sweep runner script (`scripts/sweep_rho.py`) that iterates ρ ∈
+  {0.0, 0.25, 0.5, 0.74, 1.0} for each design_mode, dispatches training,
+  collects results to `.project/results/sweeps/<mode>/<rho>.json`.
+- A real (longer) baseline run on GPU. Local box is CPU-only — plan to
+  invoke HF Jobs (existing repo scaffolding) or accept CPU-budget runs.
+- Sensitivity check: train two ρ values on TinyStories long enough to
+  exit chance regime, verify probes show non-zero spread.
