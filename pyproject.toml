@@ -47,7 +47,7 @@ dev = [
 
 # All dependencies (eval + dev)
 all = [
-    "ml-intern[eval,dev]",
+    "hf-agent[eval,dev]",
 ]
 
 [project.scripts]
