@@ -74,3 +74,4 @@ wandb/
 frontend/tsconfig.tsbuildinfo
 *.spec
 
+out/

@@ -93,3 +93,33 @@ TBD next loop.
 - Pick option (a) or (b) for compute matching; document.
 - Tokenizer + data pipeline (TinyStories or fineweb-edu sample).
 - A first 1000-step training smoke test on baseline (ρ=1).
+
+---
+
+## Loop 3 — Training pipeline + smoke tests
+
+### OBSERVE / ORIENT / DECIDE
+Need a working trainer to run anything. Build streaming data loader (TinyStories), full train loop with cosine LR + AdamW + grad clip, optional trackio.
+
+Falsifiable: 60-step CPU run on baseline shows loss decrease ≥0.5 nats; engram path runs without error.
+
+### DEVIL'S ADVOCATE
+- Tech: TinyStories chosen for tractable signal at small scale + has both narrative (reasoning) and factual content (memorization). GPT-2 BPE matches our default vocab.
+- Tech: Initial bug — was passing `batch[:,:-1]` while model already shifts internally → fixed.
+- Exp: Smoke test on CPU not a real result; we need GPU runs.
+- Priority: Compute-matching subtlety (P_active varies with ρ) NOT yet resolved. Will be Loop 4 priority. Bias may favor lower-ρ runs which have more total compute due to bigger P_active or vice-versa — must clarify before reporting.
+
+### DO
+- `data/loader.py`: streaming token packer.
+- `train/train.py`: TrainConfig, cosine LR, AdamW, optional trackio, save state+results.json.
+- Smoke test BASELINE (rho=1, d=128 L=4) 60 steps: loss 10.83→9.03 ✓
+- Smoke test ENGRAM (rho=0.5, layers [1,2]) 30 steps: loss 10.81→10.02 ✓
+- All 17 unit tests still pass.
+
+### RESULT
+Trainer works end-to-end on CPU. Engram code-paths exercised. Saved artefacts: `out/smoke_*/results.json`.
+
+### NEXT (decision pending — priority attack from this loop)
+- Decide compute-matching: option (a) iso-active by varying depth instead of just FFN width; option (b) match by training-token budget.
+- After deciding, plan a small GPU sweep on HF Jobs.
+- Eval harness: PPL + at least one knowledge probe.
