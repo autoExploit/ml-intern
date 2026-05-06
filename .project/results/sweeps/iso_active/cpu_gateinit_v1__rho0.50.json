@@ -1,0 +1,50 @@
+{
+  "rho": 0.5,
+  "design_mode": "iso_active",
+  "run_name": "cpu_gateinit_v1__rho0.50",
+  "ckpt": "out/sweeps/iso_active/cpu_gateinit_v1__rho0.50/last.pt",
+  "wallclock_s": 609.3376684188843,
+  "param_counts": {
+    "embed": 6432896,
+    "lm_head": 0,
+    "backbone_attn": 262144,
+    "backbone_ffn": 528384,
+    "backbone_norms": 1408,
+    "engram_table": 1025280,
+    "engram_compute": 263936,
+    "P_active": 1055872,
+    "P_total": 2081152,
+    "P_total_with_embed": 8514048
+  },
+  "final_val_loss": 6.066313648223877,
+  "eval": {
+    "ckpt": "out/sweeps/iso_active/cpu_gateinit_v1__rho0.50/last.pt",
+    "ppl": {
+      "nll": 6.004083776473999,
+      "ppl": 405.0796751299867,
+      "n_tokens": 10240
+    },
+    "name_recall": {
+      "name": "NameRecall",
+      "n": 80,
+      "top1_acc": 0.0,
+      "mean_rank": 12742.9875,
+      "mean_logprob_gold": -10.323824733495712,
+      "ci95": [
+        0.0,
+        0.0
+      ]
+    },
+    "induction_copy": {
+      "name": "InductionCopy",
+      "n": 80,
+      "top1_acc": 0.0,
+      "mean_rank": 22653.6375,
+      "mean_logprob_gold": -12.22475370168686,
+      "ci95": [
+        0.0,
+        0.0
+      ]
+    }
+  }
+}

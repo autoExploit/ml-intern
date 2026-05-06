@@ -1,0 +1,157 @@
+{
+  "sweep_name": "cpu_sanity_v1",
+  "design_mode": "iso_active",
+  "wallclock_s": 1872.7412054538727,
+  "runs": [
+    {
+      "rho": 1.0,
+      "design_mode": "iso_active",
+      "run_name": "cpu_sanity_v1__rho1.00",
+      "ckpt": "out/sweeps/iso_active/cpu_sanity_v1__rho1.00/last.pt",
+      "wallclock_s": 618.329042673111,
+      "param_counts": {
+        "embed": 6432896,
+        "lm_head": 0,
+        "backbone_attn": 262144,
+        "backbone_ffn": 528384,
+        "backbone_norms": 1152,
+        "engram_table": 0,
+        "engram_compute": 0,
+        "P_active": 791680,
+        "P_total": 791680,
+        "P_total_with_embed": 7224576
+      },
+      "final_val_loss": 6.193540716171265,
+      "eval": {
+        "ckpt": "out/sweeps/iso_active/cpu_sanity_v1__rho1.00/last.pt",
+        "ppl": {
+          "nll": 6.124502468109131,
+          "ppl": 456.917325766273,
+          "n_tokens": 10240
+        },
+        "name_recall": {
+          "name": "NameRecall",
+          "n": 80,
+          "top1_acc": 0.0,
+          "mean_rank": 10729.9125,
+          "mean_logprob_gold": -10.124163329601288,
+          "ci95": [
+            0.0,
+            0.0
+          ]
+        },
+        "induction_copy": {
+          "name": "InductionCopy",
+          "n": 80,
+          "top1_acc": 0.0,
+          "mean_rank": 24079.8,
+          "mean_logprob_gold": -12.17214239835739,
+          "ci95": [
+            0.0,
+            0.0
+          ]
+        }
+      }
+    },
+    {
+      "rho": 0.5,
+      "design_mode": "iso_active",
+      "run_name": "cpu_sanity_v1__rho0.50",
+      "ckpt": "out/sweeps/iso_active/cpu_sanity_v1__rho0.50/last.pt",
+      "wallclock_s": 629.3625700473785,
+      "param_counts": {
+        "embed": 6432896,
+        "lm_head": 0,
+        "backbone_attn": 262144,
+        "backbone_ffn": 528384,
+        "backbone_norms": 1408,
+        "engram_table": 1025280,
+        "engram_compute": 263936,
+        "P_active": 1055872,
+        "P_total": 2081152,
+        "P_total_with_embed": 8514048
+      },
+      "final_val_loss": 6.2583753108978275,
+      "eval": {
+        "ckpt": "out/sweeps/iso_active/cpu_sanity_v1__rho0.50/last.pt",
+        "ppl": {
+          "nll": 6.189839172363281,
+          "ppl": 487.7676533869558,
+          "n_tokens": 10240
+        },
+        "name_recall": {
+          "name": "NameRecall",
+          "n": 80,
+          "top1_acc": 0.0,
+          "mean_rank": 12277.5625,
+          "mean_logprob_gold": -10.561768680810928,
+          "ci95": [
+            0.0,
+            0.0
+          ]
+        },
+        "induction_copy": {
+          "name": "InductionCopy",
+          "n": 80,
+          "top1_acc": 0.0,
+          "mean_rank": 24220.875,
+          "mean_logprob_gold": -12.187646353244782,
+          "ci95": [
+            0.0,
+            0.0
+          ]
+        }
+      }
+    },
+    {
+      "rho": 0.0,
+      "design_mode": "iso_active",
+      "run_name": "cpu_sanity_v1__rho0.00",
+      "ckpt": "out/sweeps/iso_active/cpu_sanity_v1__rho0.00/last.pt",
+      "wallclock_s": 625.046671628952,
+      "param_counts": {
+        "embed": 6432896,
+        "lm_head": 0,
+        "backbone_attn": 262144,
+        "backbone_ffn": 528384,
+        "backbone_norms": 1408,
+        "engram_table": 2040576,
+        "engram_compute": 263936,
+        "P_active": 1055872,
+        "P_total": 3096448,
+        "P_total_with_embed": 9529344
+      },
+      "final_val_loss": 6.244872093200684,
+      "eval": {
+        "ckpt": "out/sweeps/iso_active/cpu_sanity_v1__rho0.00/last.pt",
+        "ppl": {
+          "nll": 6.177114391326905,
+          "ppl": 481.60023951529206,
+          "n_tokens": 10240
+        },
+        "name_recall": {
+          "name": "NameRecall",
+          "n": 80,
+          "top1_acc": 0.0,
+          "mean_rank": 12119.5625,
+          "mean_logprob_gold": -10.497634625434875,
+          "ci95": [
+            0.0,
+            0.0
+          ]
+        },
+        "induction_copy": {
+          "name": "InductionCopy",
+          "n": 80,
+          "top1_acc": 0.0,
+          "mean_rank": 24063.4375,
+          "mean_logprob_gold": -12.220591938495636,
+          "ci95": [
+            0.0,
+            0.0
+          ]
+        }
+      }
+    }
+  ]
+}
